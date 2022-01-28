@@ -47,12 +47,14 @@ private:
 template <typename T>
 void Param<T>::parse(vector<string> &vals)
 {
-    if (!vals.empty()) {
+    if (vals.size() == 1) {
         auto a = vals.at(0);
         istringstream ss(a);
         ss>>_val;
         cout<<"parsed: "<<typeid(_val).name()<<" "<<_val<<endl;
         call();
+    } else if (vals.size() > 1) {
+        cout<<"Too many arguments expected one";
     } else {
         cout<<"Arg is empty!!";
     }
