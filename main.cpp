@@ -30,9 +30,9 @@ int main(int argc, char *argv[]) {
 
     auto parser = Parser(argc, argv);
 
-    parser.add_argument<int>(32, "-pw", "--power");
-    parser.add_argument<int>(32, "t", "type");
-    parser.add_argument<int>(32, "--tacho");
+    parser.add_argument<int>(1, "-pw", "--power");
+    parser.add_argument<int>(2, "t", "type");
+    parser.add_argument<int>(3, "--tacho");
 
     // parser.add_argument<int>(32, "int")
     //         .help("test of the help")
