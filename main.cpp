@@ -25,20 +25,19 @@ void string_argument(std::string a) {
 
 using namespace::std;
 
-int main(void) {
-    add_argument<int>(10, &int_argument);
-    add_argument<double>(10.69, &double_argument);
-    add_argument<string>("test", &string_argument);
-    add_argument<array<int, 2>>(array<int,2>{32, 31}, [] (auto args) {
-        cout<<"Calling from lambda!: "<<args[0]<<args[1]<<endl;
-    });
+int main(int argc, char *argv[]) {
     cout<<"This is a test!"<<endl;
 
-    auto parser = Parser();
-    parser.add_argument<int>(32, "int")
-            .help("test of the help")
-            .callback([] (auto val) {
-                cout<<"Calling from lambda!: "<<val<<endl;
-            });
-    parser.parse_args();
+    auto parser = Parser(argc, argv);
+
+    parser.add_argument<int>(32, "-pw", "--power");
+    parser.add_argument<int>(32, "t", "type");
+    parser.add_argument<int>(32, "--tacho");
+
+    // parser.add_argument<int>(32, "int")
+    //         .help("test of the help")
+    //         .callback([] (auto val) {
+    //             cout<<"Calling from lambda!: "<<val<<endl;
+    //         });
+    cout<<parser.parse_args();
 }
