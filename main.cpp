@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
 
     auto parser = Parser(argc, argv);
 
-    parser.add_argument<int>(1, "-pw", "--power");
-    parser.add_argument<int>(2, "t", "type");
-    parser.add_argument<int>(3, "--tacho");
+    parser.add_argument<int>("-pw", "--power");
+    parser.add_argument<double>("t", "type");
+    parser.add_argument<unsigned>("--tacho")
+            .callback([] (auto val) {
+                cout<<"Calling from lambda!: "<<val<<endl;
+            });
+    parser.add_argument<bool>("+o");
 
-    // parser.add_argument<int>(32, "int")
-    //         .help("test of the help")
-    //         .callback([] (auto val) {
-    //             cout<<"Calling from lambda!: "<<val<<endl;
-    //         });
+     
     cout<<parser.parse_args();
 }

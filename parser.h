@@ -8,78 +8,92 @@
 #include <algorithm>
 #include <numeric>
 #include <map>
+#include <sstream>
+#include <typeinfo>
 
 // TODO: read more about virtual inheritance!
-// TODO: C++ std::forward? was is das?
+// TODO: C++ forward? was is das?
+
+using namespace std;
 
 class Param_T {
 public:
     Param_T() = default;
     ~Param_T() = default;
     virtual void call() {};
-    virtual void parse(std::vector<std::string> args, std::vector<std::string> params) {};
-    bool isRequired();
-    std::string _help;
+    virtual void parse(vector<string> &vals) {};
+    string _help;
 };
 
-bool Param_T::isRequired()
-{
-    return true;
-}
 
 template <typename T>
-using CB = std::function<void(T)>;
+using CB = function<void(T)>;
 
 
 template <typename T>
 class Param: private virtual Param_T {
 public:
-    Param(T val): _val(val) {};
-    Param& help(std::string help) { _help = help; return *this; };
+    Param& help(string help) { _help = help; return *this; };
     Param& callback(CB<T> cb) { _cb = cb; return *this; };
 
 private:
     friend class Parser;
-    void call() override { std::cout<<_val<<std::endl; if(_cb) _cb(_val); };
-    void parse(std::vector<std::string> args, std::vector<std::string> params) override;
+    void call() override { if(_cb) _cb(_val); };
+    void parse(vector<string> &vals) override;
     T _val;
     CB<T> _cb;
 };
 
 template <typename T>
-void Param<T>::parse(std::vector<std::string> args, std::vector<std::string> params)
+void Param<T>::parse(vector<string> &vals)
 {
-    ;
+    if (!vals.empty()) {
+        auto a = vals.at(0);
+        istringstream ss(a);
+        ss>>_val;
+        cout<<"parsed: "<<typeid(_val).name()<<" "<<_val<<endl;
+        call();
+    } else {
+        cout<<"Arg is empty!!";
+    }
+};
+
+template <>
+void Param<bool>::parse(vector<string> &vals)
+{
+    if (vals.empty()) {
+        _val = true;
+        cout<<"parsed: "<<typeid(_val).name()<<" "<<_val<<endl;
+    } else {
+        cout<<"Arg is not empty!!";
+    }
 };
 
 class Parser
 {
 private:
-    std::map<std::string, Param_T*> params;
-    std::vector<std::string> _argv;
-    std::vector<std::string> all_names;
+    map<string, Param_T*> params;
+    vector<string> _argv;
+    vector<string> all_names;
 public:
     Parser(int argc, char *argv[]);
     ~Parser() = default;
-    void parse(const std::string);
+    void parse(const string);
     template <typename T>
-    Param<T>& add_argument(T val, std::string name1, std::string name2="");
-    std::string parse_args();
+    Param<T>& add_argument(string name1, string name2="");
+    string parse_args();
 };
 
 Parser::Parser(int argc, char *argv[])
 {
-    for (int i = 1; i < argc; i++) {
-        auto arg = std::string(argv[i]);
-        _argv.push_back(arg);
-    }
+    _argv.insert(_argv.begin(), argv, argv+argc);
 }
 
 template <typename T>
-Param<T>& Parser::add_argument(T val, std::string name1, std::string name2)
+Param<T>& Parser::add_argument(string name1, string name2)
 {
     all_names.insert(all_names.end(), {name1, name2});
-    auto* param = new Param<T>(val);
+    auto* param = new Param<T>();
     params[name1] = param;
     if (!name2.empty()) {
         params[name2] = param;
@@ -87,25 +101,24 @@ Param<T>& Parser::add_argument(T val, std::string name1, std::string name2)
     return *param;
 }
 
-// Parsing algorithm:
-// 1. Find and mark all the Params in args -> fail if required not found.
-// How to mark it? With position? Or?
 
-
-std::string Parser::parse_args()
+string Parser::parse_args()
 {
     auto isParam = [&](auto i) { return params.count(i)>0; };
-    std::string error;
+    string error;
 
-    auto pBegin = std::find_if(_argv.begin(), _argv.end(), isParam);
+    auto pBegin = find_if(_argv.begin(), _argv.end(), isParam);
     while (pBegin != _argv.end())
     {
-        std::cout<<*pBegin<<" ";
+        cout<<*pBegin<<" ";
         auto p = params[*pBegin];
         pBegin += 1;
-        auto pEnd = std::find_if(pBegin, _argv.end(), isParam);
-        std::cout<<*pBegin<<" "<<*pEnd<<": ";
-        p->call();
+        auto pEnd = find_if(pBegin, _argv.end(), isParam);
+        auto vals = vector<string>(pBegin, pEnd);
+        for (auto a: vals) {
+            cout<<a<<" ";
+        }
+        p->parse(vals);
         pBegin = pEnd;
     }
     return error;
