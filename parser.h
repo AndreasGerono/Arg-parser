@@ -54,7 +54,7 @@ void Param<T>::parse(vector<string> &vals)
         cout<<"parsed: "<<typeid(_val).name()<<" "<<_val<<endl;
         call();
     } else if (vals.size() > 1) {
-        cout<<"Too many arguments expected one";
+        cout<<"Too many arguments expected one!!";
     } else {
         cout<<"Arg is empty!!";
     }
@@ -67,7 +67,7 @@ void Param<bool>::parse(vector<string> &vals)
         _val = true;
         cout<<"parsed: "<<typeid(_val).name()<<" "<<_val<<endl;
     } else {
-        cout<<"Arg is not empty!!";
+        cout<<"Too many arguments!!";
     }
 };
 
