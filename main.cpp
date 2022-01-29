@@ -32,9 +32,9 @@ int main(int argc, char *argv[]) {
 
     parser.add_argument<int>("-pw", "--power");
     parser.add_argument<double>("t", "type");
-    parser.add_argument<unsigned>("--tacho")
+    parser.add_argument<array<int, 4>>("--tacho")
             .callback([] (auto val) {
-                cout<<"Calling from lambda!: "<<val<<endl;
+                cout<<"Calling from lambda!: "<<val[0]<<endl;
             });
     parser.add_argument<bool>("+o");
 
