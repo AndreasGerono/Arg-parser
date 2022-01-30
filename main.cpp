@@ -5,6 +5,7 @@
 #include <array>
 #include "parser.h"
 
+
 template <typename T>
 void add_argument(T args, std::function<void(T)> callback)
 {
@@ -30,14 +31,23 @@ int main(int argc, char *argv[]) {
 
     auto parser = Parser(argc, argv);
 
-    parser.add_argument<int>("-pw", "--power");
-    parser.add_argument<double>("t", "type");
-    parser.add_argument<array<int, 4>>("--tacho")
-            .callback([] (auto val) {
-                cout<<"Calling from lambda!: "<<val[0]<<endl;
+    parser.add_argument<int>(Names{"-pw", "--power"});
+    // parser.add_argument<double>("t", "type");
+    parser.add_argument<int>("--tacho", "+2")
+            .callback([] (vector<int> val) {
+                cout<<"Calling from lambda!: ";
+                for (auto v: val) {
+                    cout<<v<<" ";
+                }
+                cout<<endl;
             });
-    parser.add_argument<bool>("+o");
 
-     
+    parser.add_argument<bool>("+o")
+                    .storeTrue()
+                    .callback([] (bool o) {
+                        cout<<"Calling from lambda: "<<o<<endl;
+                    });
+
+
     cout<<parser.parse_args();
 }
