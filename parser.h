@@ -11,6 +11,7 @@
 #include <sstream>
 #include <typeinfo>
 #include <stdexcept>
+#include <utility>
 
 // TODO: read more about virtual inheritance!
 // TODO: C++ forward? was is das?
@@ -33,23 +34,21 @@ public:
     virtual void call1() {};
     virtual void call2() {};
     virtual void parse(Iterator begin, Iterator end) {};
-    virtual int min() { return 0; };
-    virtual int max() { return 0; };
     void validate(int naargs);
     string _help;
     string _naargs;
+    int _min;
+    int _max;
 };
 
 void Param_T::validate(int naargs)
 {
-    int _min = min();
-    int _max = max();
     if (naargs < _min) {
         auto error = "Not enought parameters, expected: " + to_string(_min) + ", reveived: " + to_string(naargs);
         throw invalid_argument(error);
     }
     if (_max != -1 && naargs > _max) {
-        auto error = "Too many parameters, expected: " + to_string(_min) + ", reveived: " + to_string(naargs);
+        auto error = "Too many parameters, expected: " + to_string(_max) + ", reveived: " + to_string(naargs);
         throw invalid_argument(error);
     }
 }
@@ -68,57 +67,26 @@ public:
     Param& callback(CB1<T> cb1) { _cb1 = cb1; return *this; };
     Param& callback(CB2<T> cb2) { _cb2 = cb2; return *this; };
     Param& help(string help) { _help = help; return *this; };
-    Param& storeTrue();
+    Param& store_true() { _min = 0; _max = 0; return *this; };
+    Param& is_required() { _required = true; return *this; };
 
 private:
-    friend class Parser;
+    friend class ArgumentParser;
     void parse(Iterator begin, Iterator end) override;
     void call1() override { if(_cb1) _cb1(_args[0]); };
     void call2() override { if(_cb2) _cb2(_args); };
-    int max() override;
-    int min() override;
     vector<T> _args;
     CB1<T> _cb1;
     CB2<T> _cb2;
+    bool _required;
 };
 
-template <typename T>
-int Param<T>::min()
-{
-    if (_naargs == "+") {
-        return 1;
-    }
-    auto min = stoi(_naargs);
-    return min;
-}
-
-template <typename T>
-int Param<T>::max()
-{
-    if (_naargs[0] == '+') {
-        return -1;
-    }
-    auto max = stoi(_naargs);
-    return max;
-}
-
-template <>
-Param<bool>& Param<bool>::storeTrue()
-{
-    _naargs = "0";
-    return *this;
-}
 
 template <typename T>
 void Param<T>::parse(Iterator begin, Iterator end)
 {
-    // use loop with new T;
     auto args = vector<string>(begin, end);
     cout<<endl<<"Param vars: ";
-
-    if (args.empty()) {
-        _args.push_back(true);
-    }
 
     for (auto arg: args) {
         T tmp;
@@ -135,61 +103,102 @@ void Param<T>::parse(Iterator begin, Iterator end)
     call1();
 };
 
-// template <>
-// void Param<bool>::parse(Iterator begin, Iterator end)
-// {
-//     if (vals.empty()) {
-//         _args = true;
-//         cout<<"parsed: "<<typeid(_args).name()<<" "<<_args<<endl;
-//     } else {
-//         cout<<"Too many arguments!!"<<endl;
-//     }
-// };
 
-class Parser
+class ArgumentParser
 {
 private:
+    enum Type {
+        POSITIONAL,
+        OPTIONAL,
+    };
+    void parse_pos_args();
+    void parse_opt_args();
     map<string, Param_T*> params;
+    map<string, Param_T*> pos_params;
     vector<string> _argv;
 public:
-    Parser(int argc, char *argv[]);
-    ~Parser() = default;
-    void parse(const string);
-    template <typename T>
+    ArgumentParser(int argc, char *argv[]);
+    template <typename T=bool>
     Param<T>& add_argument(string name, string naargs="1");
-    template <typename T>
+    template <typename T=bool>
     Param<T>& add_argument(Names names, string naargs="1");
-    string parse_args();
+    pair<int, int> parse_bounds(string naargs);
+    Type parse_type(Names names);
+    void parse_args();
 };
 
-Parser::Parser(int argc, char *argv[])
+ArgumentParser::ArgumentParser(int argc, char *argv[])
 {
-    _argv.insert(_argv.begin(), argv, argv+argc);
+    _argv.insert(_argv.begin(), argv+1, argv+argc);
 }
 
 template <typename T>
-Param<T>& Parser::add_argument(string name, string naargs)
+Param<T>& ArgumentParser::add_argument(string name, string naargs)
 {
-    auto* param = new Param<T>(naargs);
-    params[name] = param;
-    return *param;
+    auto names = Names{name};
+    return add_argument<T>(names, naargs);
 }
 
 template <typename T>
-Param<T>& Parser::add_argument(vector<string> names, string naargs)
+Param<T>& ArgumentParser::add_argument(vector<string> names, string naargs)
 {
     auto* param = new Param<T>(naargs);
+    Type p_type = parse_type(names);
+    tie(param->_min, param->_max) = parse_bounds(naargs);
+
     for (auto &name: names) {
-        params[name] = param;
+        switch (p_type) {
+        case OPTIONAL:
+            params[name] = param;
+            break;
+        case POSITIONAL:
+            pos_params[name] = param;
+            break;
+        }
     }
     return *param;
 }
 
+pair<int, int> ArgumentParser::parse_bounds(string naargs)
+{
+    if (naargs == "+") {
+        return make_pair(1, -1);
+    }
 
-string Parser::parse_args()
+    auto min = stoi(naargs);
+    if (naargs[0] == '+') {
+        return make_pair(min, -1);
+    }
+    auto max = stoi(naargs);
+    return make_pair(min, max);
+}
+
+
+enum ArgumentParser::Type ArgumentParser::parse_type(Names names)
+{
+    // conditions:
+    // if one starts with - -> all starts with - and vice versa.
+    auto any_optional = any_of(names.begin(), names.end(), [](string n) { return n[0] == '-'; } );
+    if (any_optional) {
+        auto all_optional = all_of(names.begin(), names.end(), [](string n) { return n[0] == '-'; } );
+        if (all_optional) {
+            return OPTIONAL;
+        }
+        auto error = "You can't mix optional and non optional argument names!";
+        throw invalid_argument(error);
+    }
+    return POSITIONAL;
+}
+
+void ArgumentParser::parse_args()
+{
+    parse_opt_args();
+    parse_pos_args();
+}
+
+void ArgumentParser::parse_opt_args()
 {
     auto isParam = [&](auto i) { return params.count(i)>0; };
-    string error;
 
     auto pBeg = find_if(_argv.begin(), _argv.end(), isParam);
     while (pBeg != _argv.end())
@@ -200,7 +209,6 @@ string Parser::parse_args()
         auto aBeg = next(pBeg);
         auto aEnd = find_if(aBeg, _argv.end(), isParam);  // pass after -/--
         auto naargs = distance(aBeg, aEnd);
-
         p->validate(naargs);
         p->parse(aBeg, aEnd);                              // pass after -/--
 
@@ -211,5 +219,25 @@ string Parser::parse_args()
         }
         cout<<endl;
     }
-    return error;
+}
+
+void ArgumentParser::parse_pos_args()
+{
+    cout<<"Positional args: ";
+    for (auto &pos_param: pos_params) {
+        cout<<endl<<"pos_param"<<*_argv.begin()<<": "<<pos_param.first<<" ";
+        auto aBeg = _argv.begin();
+        auto aEnd = _argv.end();
+        if (pos_param.second->_max != -1) {
+            aEnd = next(aBeg, pos_param.second->_max);
+            if (distance(aEnd, _argv.end()) < 0) {
+                aEnd = _argv.end();
+            }
+        }
+        auto naargs = distance(aBeg, aEnd);
+        pos_param.second->validate(naargs);
+        pos_param.second->parse(aBeg, aEnd);
+        aBeg = _argv.erase(aBeg, aEnd);
+        cout<<pos_param.first<<", ";
+    }
 }

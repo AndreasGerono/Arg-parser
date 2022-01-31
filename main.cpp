@@ -29,8 +29,10 @@ using namespace::std;
 int main(int argc, char *argv[]) {
     cout<<"This is a test!"<<endl;
 
-    auto parser = Parser(argc, argv);
+    auto parser = ArgumentParser(argc, argv);
 
+    parser.add_argument<string>("type", "2");
+    parser.add_argument<string>("test", "1");
     parser.add_argument<int>(Names{"-pw", "--power"});
     // parser.add_argument<double>("t", "type");
     parser.add_argument<int>("--tacho", "+2")
@@ -42,12 +44,12 @@ int main(int argc, char *argv[]) {
                 cout<<endl;
             });
 
-    parser.add_argument<bool>("+o")
-                    .storeTrue()
+    parser.add_argument<bool>("-o")
+                    .store_true()
                     .callback([] (bool o) {
                         cout<<"Calling from lambda: "<<o<<endl;
                     });
 
 
-    cout<<parser.parse_args();
+    parser.parse_args();
 }
