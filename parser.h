@@ -1,25 +1,10 @@
-#include <string>
-#include <functional>
-#include <vector>
 #include <iostream>
-#include <tuple>
-#include <array>
-#include <string>
-#include <algorithm>
-#include <numeric>
-#include <map>
 #include <sstream>
-#include <typeinfo>
-#include <stdexcept>
-#include <utility>
+#include <string>
+#include <vector>
 #include <unordered_set>
-
-// TODO: read more about virtual inheritance!
-// TODO: C++ forward? was is das?
-// TODO:
-//      - implement array and vector?
-//      - implement positional arguments?
-// change of tactics -> use normal type. return pointer -> naarg as argument -> optional -> default 1?
+#include <unordered_map>
+#include <algorithm>
 
 // TO test:
 // ./test.exe 1 2 1 -pw 10 --tacho 10 20
@@ -82,7 +67,7 @@ using CB2 = function<void(vector<T>)>;
 
 
 template <typename T>
-class Param: private virtual Param_T {
+class Param: private Param_T {
 public:
     Param(vector<string> names) { _names = names; };
     Param& callback(CB1<T> cb1) { _cb1 = cb1; return *this; };
@@ -136,7 +121,9 @@ private:
 
     void parse_pos_args(void);
     void parse_opt_args(void);
-    map<string, Param_T*> params;
+    Type parse_type(Arg names);
+    pair<int, int> parse_bounds(string naargs);
+    unordered_map<string, Param_T*> params;
     vector<Param_T*> pos_params;
     vector<Param_T*> opt_params;
     vector<string> _argv;
@@ -147,10 +134,29 @@ public:
     Param<T>& add_argument(string name, string naargs="1");
     template <typename T=bool>
     Param<T>& add_argument(Arg names, string naargs="1");
-    pair<int, int> parse_bounds(string naargs);
-    Type parse_type(Arg names);
     void parse_args(void);
+    template <typename T> const T get(string arg, size_t idx=0);
+    template <typename T> const vector<T> getV(string arg);
 };
+
+
+template <typename T>
+const T ArgumentParser::get(string arg, size_t idx)
+{
+    return getV<T>(arg)[idx];
+}
+
+template <typename T>
+const vector<T> ArgumentParser::getV(string arg)
+{
+    auto it = params.find(arg);
+    if (it != params.end()) {
+        auto tmp = static_cast<Param<T>*>(it->second);
+        return tmp->_args;
+    }
+    auto error = "Error while accessing '" + arg + "': argument not known!";
+    throw invalid_argument(error);
+}
 
 ArgumentParser::ArgumentParser(int argc, char *argv[])
 {

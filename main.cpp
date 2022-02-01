@@ -56,4 +56,6 @@ int main(int argc, char *argv[]) {
     catch(const exception& e) {
         cout<<endl<<e.what();
     }
+    string test = parser.get<string>("type");
+    cout<<endl<<test<<endl;
 }
