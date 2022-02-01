@@ -32,8 +32,8 @@ int main(int argc, char *argv[]) {
     auto parser = ArgumentParser(argc, argv);
 
     parser.add_argument<string>("type", "2");
-    parser.add_argument<string>("test", "1");
-    parser.add_argument<int>(Names{"-pw", "--power"});
+    parser.add_argument<string>(Arg{"test", "test1"}, "1");
+    parser.add_argument<int>(Arg{"-pw", "--power"});
     // parser.add_argument<double>("t", "type");
     parser.add_argument<int>("--tacho", "+2")
             .callback([] (vector<int> val) {
@@ -47,9 +47,13 @@ int main(int argc, char *argv[]) {
     parser.add_argument<bool>("-o")
                     .store_true()
                     .callback([] (bool o) {
-                        cout<<"Calling from lambda: "<<o<<endl;
+                        //cout<<"Calling from lambda: "<<o<<endl;
                     });
 
-
-    parser.parse_args();
+    try {
+        parser.parse_args();
+    }
+    catch(const exception& e) {
+        cout<<endl<<e.what();
+    }
 }
