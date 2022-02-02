@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
 
     auto parser = ArgumentParser(argc, argv);
 
-    parser.add_argument<string>("type", "2");
-    parser.add_argument<string>(Arg{"test", "test1"}, "1");
+    parser.add_argument<string>("type", "2").help("set a type of something...");
+    parser.add_argument<string>(Arg{"test", "test1"}, "1").help("test of something");
     parser.add_argument<int>(Arg{"-pw", "--power"});
     // parser.add_argument<double>("t", "type");
     parser.add_argument<int>("--tacho", "+2")
@@ -58,4 +58,5 @@ int main(int argc, char *argv[]) {
     }
     string test = parser.get<string>("type");
     cout<<endl<<test<<endl;
+    parser.print_help();
 }

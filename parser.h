@@ -21,10 +21,9 @@ public:
     virtual void call2(void) {};
     virtual void parse(Iterator begin, Iterator end) {};
     void validate(int naargs);
-    string help(void);
-    string name(void);
-    vector<string> _names;  // To generate help
+    string name;
     string _help;
+    bool _required;
     int _min;
     int _max;
     int _no_calls;
@@ -42,34 +41,16 @@ void Param_T::validate(int naargs)
     }
 }
 
-string Param_T::help(void)
-{
-    return "";
-}
-
-string Param_T::name(void)
-{
-    string name = "";
-    for_each(_names.begin(), _names.end(), [&](auto &elem) {
-        name += elem;
-        if (elem != _names.back()) {
-            name += ", ";
-        }
-    });
-    return name;
-}
-
 
 template <typename T>
 using CB1 = function<void(T)>;
 template <typename T>
 using CB2 = function<void(vector<T>)>;
 
-
 template <typename T>
 class Param: private Param_T {
 public:
-    Param(vector<string> names) { _names = names; };
+    Param(vector<string> names);
     Param& callback(CB1<T> cb1) { _cb1 = cb1; return *this; };
     Param& callback(CB2<T> cb2) { _cb2 = cb2; return *this; };
     Param& help(string help) { _help = help; return *this; };
@@ -87,6 +68,16 @@ private:
     bool _required;
 };
 
+template <typename T>
+Param<T>::Param(vector<string> names)
+{
+    for_each(names.begin(), names.end(), [&](auto &elem) {
+        name += elem;
+        if (elem != names.back()) {
+            name += ", ";
+        }
+    });
+};
 
 template <typename T>
 void Param<T>::parse(Iterator begin, Iterator end)
@@ -130,13 +121,12 @@ private:
 
 public:
     ArgumentParser(int argc, char *argv[]);
-    template <typename T=bool>
-    Param<T>& add_argument(string name, string naargs="1");
-    template <typename T=bool>
-    Param<T>& add_argument(Arg names, string naargs="1");
-    void parse_args(void);
+    template <typename T=bool> Param<T>& add_argument(string name, string naargs="1");
+    template <typename T=bool> Param<T>& add_argument(Arg names, string naargs="1");
     template <typename T> const T get(string arg, size_t idx=0);
     template <typename T> const vector<T> getV(string arg);
+    void parse_args(void);
+    void print_help(void);
 };
 
 
@@ -224,13 +214,13 @@ enum ArgumentParser::Type ArgumentParser::parse_type(Arg names)
     return POSITIONAL;
 }
 
-void ArgumentParser::parse_args()
+void ArgumentParser::parse_args(void)
 {
     parse_opt_args();
     parse_pos_args();
 }
 
-void ArgumentParser::parse_opt_args()
+void ArgumentParser::parse_opt_args(void)
 {
     auto isParam = [&](auto i) { return (i[0] == '-' && params.count(i)>0); };
 
@@ -259,11 +249,11 @@ void ArgumentParser::parse_opt_args()
     }
 }
 
-void ArgumentParser::parse_pos_args()
+void ArgumentParser::parse_pos_args(void)
 {
     cout<<"Positional args: ";
     for (auto &param: pos_params) {
-        cout<<endl<<"pos_param"<<": "<<param->name()<<" ";
+        cout<<endl<<"pos_param"<<": "<<param->name<<" ";
         auto aBeg = _argv.begin();
         auto aEnd = _argv.end();
 
@@ -278,10 +268,38 @@ void ArgumentParser::parse_pos_args()
             param->validate(naargs);
             param->parse(aBeg, aEnd);
         } catch(const exception& e) {
-            auto error = "Error while parsing '" + param->name() + "': " + e.what();
+            auto error = "Error while parsing '" + param->name + "': " + e.what();
             throw_with_nested(invalid_argument(error));
         }
 
         aBeg = _argv.erase(aBeg, aEnd);
     }
+}
+
+void ArgumentParser::print_help(void)
+{
+    auto len_compare = [](auto a, auto b) { return a->name.length() < b->name.length(); };
+
+    auto it1 = max_element(pos_params.begin(), pos_params.end(), len_compare);
+    auto it2 = max_element(opt_params.begin(), opt_params.end(), len_compare);
+
+    auto max_len = max((*it1)->name.length(), (*it2)->name.length());
+
+    auto generate_help = [] (Param_T* param, size_t max_len) {
+        auto len = max_len - param->name.length();
+        string spaces(len, ' ');
+        return "  " + param->name + spaces + "\t" + param->_help + "\n";
+    };
+
+    string help = "positional arguments:\n";
+    for (auto param: pos_params) {
+        help += generate_help(param, max_len);
+    }
+
+    help += "\noptions:\n";
+    for (auto param: opt_params) {
+        help += generate_help(param, max_len);
+    }
+
+    cout<<help;
 }
