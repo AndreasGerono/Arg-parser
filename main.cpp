@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
     parser.add_argument<string>("type", "2").help("set a type of something...");
     parser.add_argument<string>(Arg{"test", "test1"}, "1").help("test of something");
     parser.add_argument<int>(Arg{"-pw", "--power"});
-    // parser.add_argument<double>("t", "type");
     parser.add_argument<int>("--tacho", "+2")
             .callback([] (vector<int> val) {
                 cout<<"Calling from lambda!: ";
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
     parser.add_argument<bool>("-o")
                     .store_true()
                     .callback([] (bool o) {
-                        //cout<<"Calling from lambda: "<<o<<endl;
+                        cout<<"Calling from lambda: "<<o<<endl;
                     });
 
     try {
@@ -56,7 +55,11 @@ int main(int argc, char *argv[]) {
     catch(const exception& e) {
         cout<<endl<<e.what();
     }
-    string test = parser.get<string>("type");
-    cout<<endl<<test<<endl;
-    parser.print_help();
+    auto test1 = parser.get<string>("type");
+    auto test2 = parser.get<int>("-pw");
+    auto test3 = parser.get<bool>("-o");
+    cout<<endl<<test1;
+    cout<<endl<<test2;
+    cout<<endl<<test3;
+    // parser.print_help();
 }

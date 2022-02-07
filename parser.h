@@ -83,17 +83,22 @@ template <typename T>
 void Param<T>::parse(Iterator begin, Iterator end)
 {
     auto args = vector<string>(begin, end);
-    cout<<endl<<"Param vars: ";
-
-    for (auto arg: args) {
+    auto push_arg = [&](string arg) {
         T tmp;
-
         istringstream ss(arg);  // Conversion to T
         ss>>tmp;                //
-
         _args.push_back(tmp);
         cout<<endl<<"\tparsed: "<<typeid(tmp).name()<<" "<<tmp;
+    };
+
+    cout<<endl<<"Param vars: ";
+
+    for_each(args.begin(), args.end(), push_arg);
+
+    if (args.empty()) {
+        push_arg("1");
     }
+
     _no_calls += 1;
     cout<<"; ";
     call2();
@@ -133,7 +138,11 @@ public:
 template <typename T>
 const T ArgumentParser::get(string arg, size_t idx)
 {
-    return getV<T>(arg)[idx];
+    auto result = getV<T>(arg);
+    if (idx + 1 > result.size()) {
+        return T(); // always return default
+    }
+    return result[idx];
 }
 
 template <typename T>
