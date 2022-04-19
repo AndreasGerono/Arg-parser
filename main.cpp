@@ -61,5 +61,5 @@ int main(int argc, char *argv[]) {
     cout<<endl<<test1;
     cout<<endl<<test2;
     cout<<endl<<test3;
-    // parser.print_help();
+    parser.print_help();
 }
