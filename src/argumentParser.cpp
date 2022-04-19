@@ -5,9 +5,7 @@ ArgumentParser::ArgumentParser(int argc, char* argv[]) {
 }
 
 ArgumentParser::~ArgumentParser() {
-    for (auto it = params.begin(); it != params.end(); ++it) {
-        delete it->second;
-    }
+    ;
 }
 
 std::pair<int, int> ArgumentParser::parse_bounds(std::string naargs) {

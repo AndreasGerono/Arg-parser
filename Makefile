@@ -1,8 +1,9 @@
-BIN = example.exe
-CXX = g++
-CXXFLAGS = -std=c++17 -g
+.PHONY: all test example
 
-CPP_SRC = example.cpp src/argumentParser.cpp src/param.cpp
-INCLUDES = includes/
+all: # Do nothing
 
-include include_make.mk
+test:
+	$(MAKE) -f make_tests.mk $(TARGET)
+
+example:
+	$(MAKE) -f make_example.mk $(TARGET)
