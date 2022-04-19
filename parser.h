@@ -41,7 +41,7 @@ void Param_T::validate(int naargs) {
 }
 
 template <typename T>
-using CB1 = function<void(T)>;
+using CB1 = std::function<void(T)>;
 template <typename T>
 using CB2 = function<void(vector<T>)>;
 
@@ -101,7 +101,7 @@ void Param<T>::parse(Iterator begin, Iterator end) {
     auto args = vector<string>(begin, end);
     auto push_arg = [&](string arg) {
         T tmp;
-        istringstream ss(arg);  // Conversion to T
+        std::istringstream ss(arg);  // Conversion to T
         ss >> tmp;              //
         _args.push_back(tmp);
         cout << endl

@@ -1,10 +1,8 @@
 #include <iostream>
-#include <functional>
-#include <string>
-#include <tuple>
-#include <array>
-#include "parser.h"
 
+#include "argumentParser.h"
+
+using namespace std;
 
 template <typename T>
 void add_argument(T args, std::function<void(T)> callback)
@@ -61,5 +59,6 @@ int main(int argc, char *argv[]) {
     cout<<endl<<test1;
     cout<<endl<<test2;
     cout<<endl<<test3;
+    cout<<endl;
     parser.print_help();
 }

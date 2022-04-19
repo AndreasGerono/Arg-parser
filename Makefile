@@ -1,9 +1,9 @@
 BIN = test.exe
-CPP_SRS = main.cpp
-RM = rm - rf
+CPP_SRS = main.cpp argumentParser.cpp param.cpp
+RM = rm -rf
 
 $(BIN):
-	g++ $(CPP_SRS) -o $@
+	g++ -std=c++20 $(CPP_SRS) -o $@
 
-clear:
+clean:
 	$(RM) $(BIN)
