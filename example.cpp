@@ -5,7 +5,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    cout << "This is a test!" << endl;
+    cout << "This is a example use of argumentParser!" << endl;
 
     auto parser = ArgumentParser(argc, argv);
 

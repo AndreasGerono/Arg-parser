@@ -1,9 +1,8 @@
-BIN = test.exe
-CPP_SRS = main.cpp argumentParser.cpp param.cpp
-RM = rm -rf
+BIN = example.exe
+CXX = g++
+CXXFLAGS = -std=c++17 -g
 
-$(BIN):
-	g++ -std=c++20 $(CPP_SRS) -o $@
+CPP_SRC = example.cpp src/argumentParser.cpp src/param.cpp
+INCLUDES = includes/
 
-clean:
-	$(RM) $(BIN)
+include include_make.mk
