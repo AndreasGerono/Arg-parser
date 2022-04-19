@@ -4,6 +4,12 @@ ArgumentParser::ArgumentParser(int argc, char* argv[]) {
     _argv.insert(_argv.begin(), argv + 1, argv + argc);
 }
 
+ArgumentParser::~ArgumentParser() {
+    for (auto it = params.begin(); it != params.end(); ++it) {
+        delete it->second;
+    }
+}
+
 std::pair<int, int> ArgumentParser::parse_bounds(std::string naargs) {
     if (naargs == "+") {
         return std::make_pair(1, -1);

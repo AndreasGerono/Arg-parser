@@ -29,6 +29,7 @@ class ArgumentParser {
 
    public:
     ArgumentParser(int argc, char* argv[]);
+    ~ArgumentParser();
     template <typename T = bool>
     Param<T>& add_argument(std::string name, std::string naargs = "1");
     template <typename T = bool>
