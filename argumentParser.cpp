@@ -131,6 +131,6 @@ void ArgumentParser::print_help(void) {
         help += generate_help(param, max_len);
     }
 
-    std::cout << endl
+    std::cout << std::endl
               << help;
 }
